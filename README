@@ -1,0 +1,45 @@
+Quickstart:
+
+	1. make sure jdk 1.8+ and mvn3+ are installed
+	2. from the base directory, run: mvn clean package 
+	3. check unit test output for success/failure
+
+Requirements Analysis:
+
+This app is based on requirements from two places:
+1.  an email on May 14, 2020
+2.  the document "ProgrammingTest - Position Management[3].pdf"
+
+Req 1a. The solution should be clean & runnable from any machine with Maven & JDK 1.8 installed
+  Understanding: no extra technologies are particularly needed besides Maven and JDK 1.8
+Req 1b. it is ok or better if no DB is used at all
+  Understanding: don't use a DB
+Req 2a. The Positions should be updated after each transaction
+  Understanding: immediately update positions when a transaction arrives, don't cache
+  transactions and reorder then apply to positions
+Req 2b. transactions can arrive in any sequence
+  Understanding: logic can't rely on transactions arriving in a certain sequence, eg
+    we could get INS->CAN or CAN->INS or anything in between
+Req 2c. INSERT / UPDATE / CANCEL are actions on a Trade (with same trade id but different version)
+  Understanding: the same trade id can have multiple actions (separated by diff version)
+Req 2d. INSERT will always be 1st version of a Trade, CANCEL will always be last version of Trade.
+  Understanding: Not too sure what this requirement means. Need more clarification. I think
+  it means for trade logic, an INSERT cannot happen after an CANCEL (or UPDATE) for the
+  same trade. So if we have a CANCEL transaction for a trade X, we should ignore any
+  INSERT (or UPDATE) transactions we receive after for that same trade X.
+Req 2e. For UPDATE, SecurityCode or Quantity or Buy/Sell can change
+  Understanding: UPDATE actions can have different data than INSERT actions for the
+  same trade, and the position should use the UPDATE data rather than the INSERT data
+Req 2f. For CANCEL, any changes in SecurityCode or Quantity or Buy/Sell may change and should be
+ignored
+  Understanding: Once a CANCEL transaction is received, we cancel the whole Trade and
+  don't worry about those data in the CANCEL transaction.
+
+Possible improvements?
+
+- more validation the input data (eg are there allowed ranges for quantity?)
+- use a state machine for I/U/C ?
+- more multi-threading and thread-safety
+- better historical data available to see transactions (arrival order, processed state, etc)
+- data protection/consistency checks?
+- some kind of FIFO structure for receiving transactions, like a Queue/BlockingQueue/etc
